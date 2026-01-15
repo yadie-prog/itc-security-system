@@ -14,7 +14,6 @@
     #login-overlay { display: none; }
     .glass-effect { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
     
-    /* Perbaikan agar tombol logout tidak bertabrakan di layar kecil */
     @media (max-width: 640px) {
       header { padding-top: 50px !important; }
       .logout-btn { top: 10px !important; right: 10px !important; }
@@ -186,7 +185,6 @@ function handleLogout() {
   });
 }
 
-// Fungsi QR Scanner yang diperbarui
     function toggleScanner() {
       const readerDiv = document.getElementById('reader');
       
@@ -205,7 +203,6 @@ function handleLogout() {
         aspectRatio: 1.0 
       };
 
-      // Mulai kamera belakang (environment)
       html5QrCode.start(
         { facingMode: "environment" }, 
         config,
@@ -224,7 +221,7 @@ function handleLogout() {
           });
         },
         (errorMessage) => {
-          // Abaikan error saat mencari QR (mencegah log penuh)
+
         }
       ).catch(err => {
         console.error("Gagal memulai kamera:", err);
@@ -261,7 +258,6 @@ function submitSecurityData() {
 
   Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
   
-  // MENGGUNAKAN FETCH POST KE API_URL
   fetch(API_URL, {
     method: 'POST',
     body: JSON.stringify(data)
@@ -289,5 +285,6 @@ function submitSecurityData() {
 </body>
 
 </html>
+
 
 
