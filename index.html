@@ -221,27 +221,36 @@ function submitSecurityData() {
     return Swal.fire('Peringatan', 'Data wajib belum lengkap!', 'warning');
   }
 
-  Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  Swal.fire({ 
+    title: 'Mengirim Data...', 
+    text: 'Mohon tunggu sebentar',
+    allowOutsideClick: false, 
+    didOpen: () => { Swal.showLoading(); } 
+  });
+
 
   fetch(API_URL, {
     method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   })
   .then(() => {
-    Swal.fire({ icon: 'success', title: 'Berhasil Tersimpan', timer: 1500, showConfirmButton: false });
+    Swal.fire({ icon: 'success', title: 'Data Terkirim!', timer: 1500, showConfirmButton: false });
     
     ['i_plate', 'i_park', 'i_ws', 'i_fuel', 'i_pem', 'i_cust'].forEach(id => {
       document.getElementById(id).value = "";
     });
-    
-    stopScanner(); 
+    if (html5QrCode) stopScanner();
   })
   .catch(err => {
-    Swal.fire('Error', 'Gagal terhubung ke server. Cek sinyal.', 'error');
+    console.error(err);
+    Swal.fire('Error', 'Gagal terhubung ke server. Pastikan koneksi internet stabil.', 'error');
   });
 }
   </script>
 </body>
 </html>
+
 
 
