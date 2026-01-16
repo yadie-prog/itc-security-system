@@ -221,11 +221,11 @@ function submitSecurityData() {
     return Swal.fire('Peringatan', 'Data wajib belum lengkap!', 'warning');
   }
 
-  Swal.fire({ 
-    title: 'Mengirim Data...', 
-    text: 'Mohon tunggu sebentar',
-    allowOutsideClick: false, 
-    didOpen: () => { Swal.showLoading(); } 
+Swal.fire({ 
+    title: 'Mengirim...', 
+    timer: 800, 
+    showConfirmButton: false, 
+    didOpen: () => Swal.showLoading() 
   });
 
 
@@ -234,23 +234,21 @@ function submitSecurityData() {
     mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
-  })
-  .then(() => {
-    Swal.fire({ icon: 'success', title: 'Data Terkirim!', timer: 1500, showConfirmButton: false });
-    
+  }).then(() => {
     ['i_plate', 'i_park', 'i_ws', 'i_fuel', 'i_pem', 'i_cust'].forEach(id => {
       document.getElementById(id).value = "";
     });
-    if (html5QrCode) stopScanner();
+    
+    Swal.fire({ icon: 'success', title: 'Data Masuk!', timer: 1000, showConfirmButton: false });
   })
   .catch(err => {
-    console.error(err);
-    Swal.fire('Error', 'Gagal terhubung ke server. Pastikan koneksi internet stabil.', 'error');
+    Swal.fire('Error', 'Cek koneksi internet!', 'error');
   });
 }
   </script>
 </body>
 </html>
+
 
 
 
