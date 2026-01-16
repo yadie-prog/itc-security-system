@@ -184,30 +184,23 @@ function handleLogout() {
     }
   });
 }
-
     function toggleScanner() {
       const readerDiv = document.getElementById('reader');
-      
-      // Jika scanner sedang aktif, maka hentikan
       if (html5QrCode && html5QrCode.isScanning) {
         stopScanner();
         return;
       }
-
       readerDiv.classList.remove('hidden');
       html5QrCode = new Html5Qrcode("reader");
-      
       const config = { 
         fps: 10, 
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0 
       };
-
       html5QrCode.start(
         { facingMode: "environment" }, 
         config,
         (decodedText) => {
-          // Berhasil Scan
           document.getElementById('i_park').value = decodedText.toUpperCase();
           stopScanner();
           Swal.fire({ 
@@ -221,7 +214,6 @@ function handleLogout() {
           });
         },
         (errorMessage) => {
-
         }
       ).catch(err => {
         console.error("Gagal memulai kamera:", err);
@@ -229,7 +221,6 @@ function handleLogout() {
         readerDiv.classList.add('hidden');
       });
     }
-
     function stopScanner() {
       if (html5QrCode) {
         html5QrCode.stop().then(() => {
@@ -241,49 +232,54 @@ function handleLogout() {
 	  
 	  	  
 function submitSecurityData() {
-  const data = {
-    plate: document.getElementById('i_plate').value.trim().toUpperCase(),
-    parking: document.getElementById('i_park').value,
-    lot: " ", 
-    workstation: document.getElementById('i_ws').value,
-    fuel: document.getElementById('i_fuel').value,
-    peminjam: document.getElementById('i_pem').value,
-    customer: document.getElementById('i_cust').value,
-    pic: CURRENT_PIC
-  };
-
-  if(!data.plate || !data.workstation || !data.peminjam || !data.parking) {
+  const plate = document.getElementById('i_plate').value.trim().toUpperCase();
+  const parking = document.getElementById('i_park').value;
+  const workstation = document.getElementById('i_ws').value;
+  const fuel = document.getElementById('i_fuel').value;
+  const peminjam = document.getElementById('i_pem').value;
+  const customer = document.getElementById('i_cust').value;
+  if(!plate || !workstation || !peminjam || !parking) {
     return Swal.fire('Peringatan', 'Mohon lengkapi data wajib!', 'warning');
   }
 
- Swal.fire({ 
-    title: 'Mengirim...', 
+  const data = {
+    plate: plate,
+    parking: parking,
+    lot: "-", 
+    workstation: workstation,
+    fuel: fuel,
+    peminjam: peminjam,
+    customer: customer,
+    pic: CURRENT_PIC
+  };
+  Swal.fire({ 
+    title: 'Menyimpan Data...', 
+    text: 'Harap tunggu sebentar',
     allowOutsideClick: false, 
     showConfirmButton: false,
     didOpen: () => Swal.showLoading() 
   });
-  
   fetch(API_URL, {
     method: 'POST',
-    mode: 'no-cors',
     body: JSON.stringify(data)
   })
-  .then(() => {
-   Swal.fire({ icon:'success', title:'Tersimpan', text:'Data telah dikirim.', timer: 1500 });
+  .then(response => {
+    Swal.fire({ 
+      icon: 'success', 
+      title: 'Berhasil!', 
+      text: 'Data unit ' + plate + ' telah tersimpan.', 
+      timer: 2000,
+      showConfirmButton: false
+    });
     ['i_plate', 'i_park', 'i_ws', 'i_fuel', 'i_pem', 'i_cust'].forEach(id => {
       document.getElementById(id).value = "";
     });
   })
   .catch(err => {
-    Swal.fire('Error', 'Periksa koneksi internet Anda.', 'error'); //
+    console.error("Error:", err);
+    Swal.fire('Gagal!', 'Terjadi kesalahan koneksi atau server sibuk.', 'error');
   });
 }
   </script>
 </body>
-
 </html>
-
-
-
-
-
