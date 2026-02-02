@@ -220,71 +220,44 @@ function toggleScanner() {
   );
 }
 
-async function submitSecurityData() {
-  const data = {
-    plate: document.getElementById('i_plate').value.trim().toUpperCase(),
-    parking: document.getElementById('i_park').value,
-    lot: "-", 
-    workstation: document.getElementById('i_ws').value,
-    fuel: document.getElementById('i_fuel').value,
-    peminjam: document.getElementById('i_pem').value,
-    customer: document.getElementById('i_cust').value,
-    pic: CURRENT_PIC,
-    timestamp: new Date().toLocaleString('id-ID')
-  };
+function submitSecurityData() {
+  const data = {
+    plate: document.getElementById('i_plate').value.trim().toUpperCase(),
+    parking: document.getElementById('i_park').value,
+    lot: "-", 
+    workstation: document.getElementById('i_ws').value,
+    fuel: document.getElementById('i_fuel').value,
+    peminjam: document.getElementById('i_pem').value,
+    customer: document.getElementById('i_cust').value,
+    pic: CURRENT_PIC,
+    timestamp: new Date().toLocaleString('id-ID')
+  };
 
-  // Validasi minimal
-  if(!data.plate || !data.workstation || !data.parking) {
-    return Swal.fire('Peringatan', 'Data wajib belum lengkap!', 'warning');
-  }
+  if(!data.plate || !data.workstation || !data.parking) {
+    return Swal.fire('Peringatan', 'Data wajib belum lengkap!', 'warning');
+  }
 
-  // Menampilkan Loading Indikator (Background proses dimulai)
-  Swal.fire({
-    title: 'Menyimpan Data...',
-    text: 'Sedang menghubungkan ke Spreadsheet',
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    }
-  });
 
-  try {
-    // MENGIRIM DATA (Tanpa no-cors agar bisa divalidasi)
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
+  saveToLocalHistory(data);
+  
+  const inputs = ['i_plate', 'i_park', 'i_ws', 'i_fuel', 'i_pem', 'i_cust'];
+  inputs.forEach(id => document.getElementById(id).value = "");
+  if (html5QrCode) stopScanner();
 
-    const result = await response.json();
 
-    if (result.status === "success") {
-      // Data terkonfirmasi masuk ke Spreadsheet
-      saveToLocalHistory(data);
-      
-      // Reset Form
-      const inputs = ['i_plate', 'i_park', 'i_ws', 'i_fuel', 'i_pem', 'i_cust'];
-      inputs.forEach(id => document.getElementById(id).value = "");
-      if (html5QrCode) stopScanner();
+  fetch(API_URL, {
+    method: 'POST',
+    mode: 'no-cors', 
+    body: JSON.stringify(data)
+  });
 
-      Swal.fire({ 
-        icon: 'success', 
-        title: 'Berhasil!', 
-        text: 'Data telah aman di Spreadsheet.', 
-        timer: 1500, 
-        showConfirmButton: false 
-      });
-    } else {
-      throw new Error(result.message);
-    }
-  } catch (error) {
-    // Jika koneksi putus atau server error
-    console.error("Error detail:", error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Gagal Terinput',
-      text: 'Koneksi tidak stabil. Silahkan klik Simpan lagi.',
-    });
-  }
+  Swal.fire({ 
+    icon: 'success', 
+    title: 'Data Diproses', 
+    text: 'Data disimpan di history lokal & sedang dikirim ke cloud.',
+    timer: 1500, 
+    showConfirmButton: false 
+  });
 }
 
 function saveToLocalHistory(newData) {
@@ -312,64 +285,53 @@ function renderHistory() {
         <div class="text-[9px] text-gray-400 mt-1">${item.timestamp}</div>
       </div>
       <div class="flex gap-2">
-        <button onclick="resendData(${index})" class="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition" title="Kirim Ulang">
-          <i class="fa fa-paper-plane text-xs"></i>
+        <button onclick="resendData(${index})" class="bg-blue-100 text-blue-600 p-3 rounded-xl hover:bg-blue-600 hover:text-white transition active:scale-90" title="Kirim Ulang">
+          <i class="fa fa-paper-plane"></i>
         </button>
-        <button onclick="showHistoryDetail(${index})" class="bg-emerald-100 text-emerald-700 p-2 rounded-lg hover:bg-emerald-200 transition">
-          <i class="fa fa-chevron-right text-xs"></i>
+        <button onclick="showHistoryDetail(${index})" class="bg-emerald-100 text-emerald-700 p-3 rounded-xl hover:bg-emerald-600 hover:text-white transition active:scale-90">
+          <i class="fa fa-chevron-right"></i>
         </button>
       </div>
     </div>
   `).join('');
 }
 
-// Fungsi Baru: Kirim Ulang Data dari History
-async function resendData(index) {
+function resendData(index) {
   const history = JSON.parse(localStorage.getItem("itc_history_device") || "[]");
   const data = history[index];
 
   if (!data) return;
 
+  // Animasi Loading Kecil
   Swal.fire({
-    title: 'Kirim Ulang Data?',
-    text: `Mengirim ulang data plat ${data.plate}`,
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Ya, Kirim!',
-    allowOutsideClick: false
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      Swal.fire({
-        title: 'Sedang Mengirim...',
-        didOpen: () => { Swal.showLoading(); }
-      });
-
-      try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(data)
-        });
-
-        const resJson = await response.json();
-
-        if (resJson.status === "success") {
-          Swal.fire({
-            icon: 'success',
-            title: 'Berhasil Terkirim!',
-            text: 'Data telah diperbarui di Spreadsheet.',
-            timer: 1500,
-            showConfirmButton: false
-          });
-        } else {
-          throw new Error(resJson.message);
-        }
-      } catch (error) {
-        Swal.fire('Gagal', 'Koneksi bermasalah. Pastikan internet stabil.', 'error');
-      }
+    title: 'Mengirim Ulang...',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
     }
   });
-}
 
+  fetch(API_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify(data)
+  })
+  .then(() => {
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil Terkirim',
+      text: `Data ${data.plate} telah dikirim ulang ke Cloud.`,
+      timer: 2000,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
+    });
+  })
+  .catch(err => {
+    Swal.fire('Gagal', 'Koneksi bermasalah, coba lagi nanti.', 'error');
+  });
+}
+    
 function clearLocalHistory() {
   Swal.fire({
     title: 'Hapus History?',
@@ -449,4 +411,3 @@ function clearLocalHistory() {
   </script>
 </body>
 </html>
-
